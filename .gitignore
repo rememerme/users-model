@@ -1,0 +1,7 @@
+*.pyc
+.metadata
+.project
+.pydevproject
+.DS_STORE
+.viminfo
+*.swp

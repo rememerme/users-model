@@ -1,12 +1,46 @@
-from users.util import CassaModel
 from django.db import models
 import pycassa
 from django.conf import settings
 import uuid
 from rest_framework import serializers
+import hashlib
 
 # User model faked to use Cassandra
 POOL = pycassa.ConnectionPool('users', server_list=settings.CASSANDRA_NODES)
+
+'''
+    Model that we can use to get rid of the Django stuff, but still use the model
+    concept while coding.
+'''
+class CassaModel(models.Model):
+    '''
+        Overriding the default save method to remove Django operation.
+        
+        This save will do nothing and will not be used.
+    '''
+    def save(self):
+        pass
+    
+    '''
+        Updates this user with the values put into the map.
+        
+        @param other: The map of values to use for updating the model.
+    '''
+    def update(self, other):
+        for attrKey in self.__dict__.keys():
+            if attrKey in other:
+                setattr(self, attrKey, other[attrKey])
+    
+    '''
+        Overriding the default delete method to remove Django operation.
+        
+        This delete will do nothing and will not be used.
+    '''
+    def delete(self):
+        pass
+    
+    class Meta:
+        app_label = u'users'
 
 class User(CassaModel):
     table = pycassa.ColumnFamily(POOL, 'user')
@@ -115,6 +149,17 @@ class User(CassaModel):
             gen = User.table.get_range(start=page, row_count=limit + 1)
             gen.next()
             return [User.fromCassa(cassRep) for cassRep in gen]
+    
+    '''
+        Hashes a password with the given salt. If no salt is provided, the salt that will be
+        used is an empty string.
+    '''
+    @staticmethod
+    def hash_password(password, salt=''):
+        password = password.encode('utf8') if isinstance(password, unicode) else password
+        salt = salt.encode('utf8') if isinstance(salt, unicode) else salt
+        
+        return unicode(hashlib.sha256(salt + password).hexdigest())
     
     '''
         Saves a set of users given by the cassandra in/output, which is

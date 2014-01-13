@@ -1,4 +1,4 @@
 Users Model
 ================
 
-Handles the database model for the user session module of the system.
+Handles the database model for the users module of the system.

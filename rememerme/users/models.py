@@ -139,7 +139,8 @@ class User(CassaModel):
         User.table.insert(user_id, CassaUserSerializer(self).data)
         self.user_id = user_id
         
-        
+    def authenticate(self, password):
+       	return self.password == User.hash_password(password, self.salt)    
         
 '''
     The User serializer used to create a python dictionary for submitting to the
